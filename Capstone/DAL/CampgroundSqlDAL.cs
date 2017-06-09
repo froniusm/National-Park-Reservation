@@ -13,6 +13,19 @@ namespace Capstone.DAL
         public List<Campground> GetAllCampgrounds()
         {
             throw new NotImplementedException();
+
+            //try
+            //{
+            //    using (SqlConnection conn = new SqlConnection(databaseConnection))
+            //    {
+            //        conn.Open();
+            //        SqlCommand cmd = new SqlCommand( , conn);
+            //    }
+            //}
+            //catch (SqlException)
+            //{
+            //    throw;
+            //}
         }
     }
 }

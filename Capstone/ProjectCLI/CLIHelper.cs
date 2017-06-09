@@ -43,7 +43,7 @@ namespace Capstone.ProjectCLI
                     Console.WriteLine("Invalid input. Please try again");
                 }
 
-                DisplayHeader();
+                //DisplayHeader();
                 Console.Write(message);
 
                 userInput = Console.ReadLine();
@@ -54,6 +54,29 @@ namespace Capstone.ProjectCLI
             return intValue;
         }
 
+        public static int GetInteger(string message)
+        {
+            string userInput = String.Empty;
+            int intValue = 0;
+            int numberOfAttempts = 0;
+
+            do
+            {
+                if (numberOfAttempts > 0)
+                {
+                    Console.WriteLine("Invalid input. Please try again");
+                }
+
+                //DisplayHeader();
+                Console.Write(message);
+
+                userInput = Console.ReadLine();
+                numberOfAttempts++;
+            }
+            while (!int.TryParse(userInput, out intValue));
+
+            return intValue;
+        }
 
         public static double GetDouble(string message)
         {
@@ -100,7 +123,7 @@ namespace Capstone.ProjectCLI
             return boolValue;
         }
 
-        public static string GetString(string message, List<string> availableChoices, bool isCaseSensitive)
+        public static string GetString(string message, List<string> availableChoices, bool isCaseSensitive = false)
         {
             string userInput = String.Empty;
             int numberOfAttempts = 0;
@@ -113,7 +136,7 @@ namespace Capstone.ProjectCLI
                     Console.ReadLine();
                 }
 
-                DisplayHeader();
+                //DisplayHeader();
                 Console.Write(message);
 
                 userInput = isCaseSensitive ? Console.ReadLine() : Console.ReadLine().ToUpper();

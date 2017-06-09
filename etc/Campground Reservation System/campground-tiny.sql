@@ -208,3 +208,6 @@ ALTER TABLE campground ADD FOREIGN KEY (park_id) REFERENCES park(park_id);
 ALTER TABLE site ADD FOREIGN KEY (campground_id) REFERENCES campground(campground_id);
 ALTER TABLE reservation ADD FOREIGN KEY (site_id) REFERENCES site(site_id);
 
+SELECT * FROM site
+	INNER JOIN campground ON campground.campground_id = site.campground_id
+WHERE campground.park_id = 1;
