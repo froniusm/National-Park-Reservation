@@ -18,7 +18,43 @@ namespace Capstone.DAL
             this.databaseConnection = databaseConnection;
         }
 
-        public List<Campsite> GetAllCampsites()
+        public List<Campsite> GetAllCampsitesFromCampground(BasicSearch bs)
+        {
+            List<Campsite> campsitesMeetingCriteria = new List<Campsite>();
+
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(databaseConnection))
+                {
+                    conn.Open();
+                    int campgroundID = bs.LocationID;
+                    int monthStartVisit = bs.StartDate.Month;
+                    int monthEndVisit = bs.EndDate.Month;
+
+                    string sqlQuery = "SELECT * FROM [site] " +
+                        "INNER JOIN campground ON campground.campground_id = [site].campground_id " +
+                        $"WHERE campground.park_id = {campgroundID} AND " +
+                        $"campground.open_from_mm <= {monthStartVisit} AND " +
+                        $"campground.open_to_mm >= {monthEndVisit};";
+
+                    SqlCommand cmd = new SqlCommand(sqlQuery, conn);
+
+                    SqlDataReader reader = cmd.ExecuteReader();
+                    while(reader.Read())
+                    {
+                        campsitesMeetingCriteria.Add(PopulateCampsiteObject(reader));
+                    }
+
+                    return campsitesMeetingCriteria;
+                }
+            }
+            catch (SqlException)
+            {
+                throw;
+            }
+        }
+
+        public List<Campsite> GetAllCampsitesFromCampground(BasicSearch bs, AdvancedSearchOptions aso)
         {
             throw new NotImplementedException();
         }

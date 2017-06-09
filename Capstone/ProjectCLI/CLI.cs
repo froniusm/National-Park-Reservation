@@ -35,17 +35,27 @@ namespace Capstone.ProjectCLI
             string userChoice = CLIHelper.GetString(message, answerChoices, isCaseSensitive);
 
             // For either option, user must select park first
-            Park selectedPark = SelectPark();
+
 
             // Retrieve list of campsites meeting search criteria
+            Park selectedPark = new Park();
+            List<Campsite> campsMeetingCriteria = new List<Campsite>();
+
             switch (userChoice)
             {
                 case Command_SearchCampsiteByPark:
-                    List<Campsite> campsMeetingCriteria = SearchForCampsitesMeetingCriteria(selectedPark.ParkID);
+                    selectedPark = SelectPark();
+                    campsMeetingCriteria = SearchForCampsitesInPark(selectedPark.ParkID);
                     break;
 
                 case Command_SearchCampsiteByCampground:
+                    selectedPark = SelectPark();
+                    Campground selectedCampground = SelectCampground(selectedPark.ParkID);
+                    campsMeetingCriteria = SearchForCampsitesInCampground(selectedCampground.CampgroundID);
                     break;
+
+                case Command_Quit:
+                    return;
             }
         }
 
@@ -67,8 +77,6 @@ namespace Capstone.ProjectCLI
                 Console.WriteLine($" [{i}] {AllParks[i - 1].ToString()}\n");
             }
 
-            Console.ReadLine();
-
             // Store user park selection
             string message = "\n Please choose a park. >> ";
             List<int> availableChoices = Enumerable.Range(1, AllParks.Count).ToList<int>();
@@ -78,41 +86,112 @@ namespace Capstone.ProjectCLI
             return selectedPark;
         }
 
-        public List<Campsite> SearchForCampsitesMeetingCriteria(int locationID)
+        public Campground SelectCampground(int parkID)
         {
             CLIHelper.DisplayHeader();
-            
+
+            CampgroundSqlDAL campgroundDAL = new CampgroundSqlDAL(databaseConnection);
+
+            // Retrieve all campgrounds in selected park
+            List<Campground> campgroundsInPark = campgroundDAL.GetAllCampgroundsFromPark(parkID);
+
+            // Print header for campground information
+            Console.WriteLine("Name".PadLeft(9).PadRight(35) + "Month Open".PadRight(20) 
+                + "Month Closed".PadRight(20) + "Daily Fee".PadRight(10));
+
+            // Print each campground in selected park
+            for (int i = 1; i <= campgroundsInPark.Count; i++)
+            {
+                Console.WriteLine($" [{i}] {campgroundsInPark[i - 1].ToString()}");
+            }
+
+            // Store user campground selection
+            string message = "\n Please choose a campground. >> ";
+            List<int> availableChoices = Enumerable.Range(1, campgroundsInPark.Count).ToList<int>();
+            int userSelection = CLIHelper.GetInteger(message, availableChoices);
+            Campground selectedCampground = campgroundsInPark[userSelection - 1];
+
+            return selectedCampground;
+        }
+
+        public List<Campsite> SearchForCampsitesInPark(int parkID)
+        {
+            // Create new CampsiteSqlDAL
+            CampsiteSqlDAL campsiteDAL = new CampsiteSqlDAL(databaseConnection);
+
+            // Conduct search and store basic search criteria
+            List<ISearchObject> parkSearchCriteria = ConductCampsiteSearch(parkID);
+            BasicSearch bs = (BasicSearch) parkSearchCriteria[0];
+
+            // If only basic search conducted, return campsites meeting basic criteria
+            if (parkSearchCriteria.Count == 1)
+            {
+                return campsiteDAL.GetAllCampsitesFromPark(bs);
+            }
+
+            // If advanced search conducted, return campsites meeting basic and advanced criteria
+            AdvancedSearchOptions aso = (AdvancedSearchOptions)parkSearchCriteria[1];
+            return campsiteDAL.GetAllCampsitesFromPark(bs, aso);
+        }
+
+        public List<Campsite> SearchForCampsitesInCampground(int campgroundID)
+        {
             // Create new CampsiteSqlDAL and empty list of campsites
             CampsiteSqlDAL campsiteDAL = new CampsiteSqlDAL(databaseConnection);
             List<Campsite> campsitesMeetingCriteria = new List<Campsite>();
 
-            // Ask user if they want to perform a basic or advanced search and then record their choice
-            string searchMessage = " Would you like to perform a basic or advanced search?\n" +
-                " [1] Basic\n [2] Advanced\n >> ";
-            string userSearchChoice = CLIHelper.GetString(searchMessage, new List<string> { "1", "2" });
+            // Conduct search and store basic search criteria
+            List<ISearchObject> campgroundSearchCriteria = ConductCampsiteSearch(campgroundID);
+            BasicSearch bs = (BasicSearch)campgroundSearchCriteria[0];
 
-            // Create basic search object
-            BasicSearch basicSearch = RunBasicSearch(locationID);
-
-            // If basic search requested, retrieve campsites meeting criteria
-            if (userSearchChoice == "1")
+            // If only basic search conducted, return campsites meeting basic criteria
+            if (campgroundSearchCriteria.Count == 1)
             {
-                campsitesMeetingCriteria = campsiteDAL.GetAllCampsitesFromPark(basicSearch);
+                //campsitesMeetingCriteria = campsiteDAL.GetAllCampsitesFromCampground(bs);
+                //foreach (Campsite c in campsitesMeetingCriteria)
+                //{
+                //    Console.WriteLine(c.ToString());
+                //}
+
+                return campsiteDAL.GetAllCampsitesFromCampground(bs);
             }
 
-            // Otherwise, conduct advanced search and retrieve campsites meeting basic and advanced criteria
-            else
-            {
-                AdvancedSearchOptions advancedSearch = RunAdvancedSearch();
-                campsitesMeetingCriteria = campsiteDAL.GetAllCampsitesFromPark(basicSearch, advancedSearch);
-            }
+            // If advanced search conducted, return campsites meeting basic and advanced criteria
+            AdvancedSearchOptions aso = (AdvancedSearchOptions) campgroundSearchCriteria[1];
 
             foreach (Campsite c in campsitesMeetingCriteria)
             {
                 Console.WriteLine(c.ToString());
             }
             Console.ReadLine();
-            return campsitesMeetingCriteria;
+            return campsiteDAL.GetAllCampsitesFromCampground(bs, aso);
+        }
+
+        public List<ISearchObject> ConductCampsiteSearch(int locationID)
+        {
+            // Display header
+            CLIHelper.DisplayHeader();
+
+            // Initialize empty list of search objects
+            List<ISearchObject> searches = new List<ISearchObject>();
+
+            // Ask user if they want to perform a basic or advanced search and then record their choice
+            string searchMessage = " Would you like to perform a basic or advanced search?\n" +
+                " [1] Basic\n [2] Advanced\n >> ";
+            string userSearchChoice = CLIHelper.GetString(searchMessage, new List<string> { "1", "2" });
+
+            // Create basic search object and add to list
+            BasicSearch basicSearch = RunBasicSearch(locationID);
+            searches.Add(basicSearch);
+
+            // Conduct advanced search if requested and add to list
+            if (userSearchChoice == "2")
+            {
+                AdvancedSearchOptions advancedSearch = RunAdvancedSearch();
+                searches.Add(advancedSearch);
+            }
+
+            return searches;
         }
 
         public BasicSearch RunBasicSearch(int locationID)

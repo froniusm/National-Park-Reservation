@@ -17,9 +17,8 @@ namespace Capstone.Models
 
         public override string ToString()
         {
-            return CampgroundID.ToString().PadRight(10) + ParkID.ToString().PadRight(10)
-                + Name.PadRight(40) + OpenMonth.ToString().PadRight(10)
-                + CloseMonth.ToString().PadRight(10) + DailyFee.ToString("C");
+            return Name.PadRight(30) + OpenMonth.ToString().PadRight(20)
+                + CloseMonth.ToString().PadRight(20) + DailyFee.ToString("C");
         }
     }
 }

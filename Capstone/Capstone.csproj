@@ -58,6 +58,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Search\AdvancedSearchOptions.cs" />
     <Compile Include="Search\BasicSearch.cs" />
+    <Compile Include="Search\SearchObject.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

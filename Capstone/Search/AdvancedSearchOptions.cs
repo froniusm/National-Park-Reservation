@@ -7,7 +7,7 @@ using Capstone.Models;
 
 namespace Capstone.Search
 {
-    public class AdvancedSearchOptions
+    public class AdvancedSearchOptions: ISearchObject
     {
         public int MaxOccupancy { get; set; }
         public bool NeedsAccessibility { get; set; }

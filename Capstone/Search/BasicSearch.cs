@@ -7,7 +7,7 @@ using Capstone.Models;
 
 namespace Capstone.Search
 {
-    public class BasicSearch
+    public class BasicSearch: ISearchObject
     {
         public int LocationID { get; set; }
         public DateTime StartDate { get; set; }
