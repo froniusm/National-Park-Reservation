@@ -44,8 +44,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CLI\CLI.cs" />
-    <Compile Include="CLI\CLIHelper.cs" />
+    <Compile Include="ProjectCLI\CLI.cs" />
+    <Compile Include="ProjectCLI\CLIHelper.cs" />
     <Compile Include="DAL\CampgroundSqlDAL.cs" />
     <Compile Include="DAL\ParkSqlDAL.cs" />
     <Compile Include="DAL\ReservationSqlDAL.cs" />

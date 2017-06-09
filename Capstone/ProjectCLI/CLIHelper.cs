@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Capstone.CLI
+namespace Capstone.ProjectCLI
 {
     public class CLIHelper
     {
@@ -30,7 +30,7 @@ namespace Capstone.CLI
             return dateValue;
         }
 
-        public static int GetInteger(string message)
+        public static int GetInteger(string message, List<int> availableChoices)
         {
             string userInput = String.Empty;
             int intValue = 0;
@@ -40,17 +40,18 @@ namespace Capstone.CLI
             {
                 if (numberOfAttempts > 0)
                 {
-                    Console.WriteLine("Invalid input format. Please try again");
+                    Console.WriteLine("Invalid input. Please try again");
                 }
 
-                Console.Write(message + " ");
+                DisplayHeader();
+                Console.Write(message);
+
                 userInput = Console.ReadLine();
                 numberOfAttempts++;
             }
-            while (!int.TryParse(userInput, out intValue));
+            while (!int.TryParse(userInput, out intValue) || !availableChoices.Contains(intValue));
 
             return intValue;
-
         }
 
 
@@ -99,7 +100,7 @@ namespace Capstone.CLI
             return boolValue;
         }
 
-        public static string GetString(string message)
+        public static string GetString(string message, List<string> availableChoices, bool isCaseSensitive)
         {
             string userInput = String.Empty;
             int numberOfAttempts = 0;
@@ -108,16 +109,27 @@ namespace Capstone.CLI
             {
                 if (numberOfAttempts > 0)
                 {
-                    Console.WriteLine("Invalid input format. Please try again");
+                    Console.Write("\n Invalid input. Please try again. ");
+                    Console.ReadLine();
                 }
 
-                Console.Write(message + " ");
-                userInput = Console.ReadLine();
+                DisplayHeader();
+                Console.Write(message);
+
+                userInput = isCaseSensitive ? Console.ReadLine() : Console.ReadLine().ToUpper();
                 numberOfAttempts++;
             }
-            while (String.IsNullOrEmpty(userInput));
+            while (String.IsNullOrEmpty(userInput) || !availableChoices.Contains(userInput));
 
             return userInput;
+        }
+
+        public static void DisplayHeader()
+        {
+            Console.Clear();
+            Console.WriteLine("".PadRight(50, '*'));
+            Console.WriteLine("* NATIONAL PARK CAMPSITE RESERVATION SYSTEM *");
+            Console.WriteLine("".PadRight(50, '*') + "\n");
         }
     }
 }

@@ -11,7 +11,7 @@ namespace Capstone.Search
     {
         public int MaxOccupancy { get; set; }
         public bool NeedsAccessibility { get; set; }
-        public bool NeedsUtilityHookup { get; set; }
         public int RequiredRVLength { get; set; }
+        public bool NeedsUtilityHookup { get; set; }
     }
 }
