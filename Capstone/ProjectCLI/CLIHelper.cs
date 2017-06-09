@@ -147,6 +147,29 @@ namespace Capstone.ProjectCLI
             return userInput;
         }
 
+        public static string GetString(string message)
+        {
+            string userInput = String.Empty;
+            int numberOfAttempts = 0;
+
+            do
+            {
+                if (numberOfAttempts > 0)
+                {
+                    Console.Write("\n Invalid input. Please try again. ");
+                    Console.ReadLine();
+                }
+
+                //DisplayHeader();
+                Console.Write(message);
+
+                numberOfAttempts++;
+            }
+            while (String.IsNullOrEmpty(userInput));
+
+            return userInput;
+        }
+
         public static void DisplayHeader()
         {
             Console.Clear();

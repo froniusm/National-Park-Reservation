@@ -21,10 +21,9 @@ namespace Capstone.Models
             string accessibleYesNo = IsAccessible ? "Yes" : "No";
             string utilitiesYesNo = HasUtilities ? "Yes" : "No";
 
-            return SiteID.ToString().PadRight(10) + CampgroundID.ToString().PadRight(10)
-                + SiteNumber.ToString().PadRight(10) + MaxOccupancy.ToString().PadRight(10) 
-                + accessibleYesNo.PadRight(10) + MaxRVLength.ToString().PadRight(10)
-                + utilitiesYesNo.PadRight(10);
+            return SiteNumber.ToString().PadRight(20) + MaxOccupancy.ToString().PadRight(20) 
+                + accessibleYesNo.PadRight(20) + MaxRVLength.ToString().PadRight(20)
+                + utilitiesYesNo;
         }
     }
 }

@@ -17,8 +17,7 @@ namespace Capstone.Models
 
         public override string ToString()
         {
-            return ReservationID.ToString().PadRight(10) + SiteID.ToString().PadRight(10)
-                + Name.ToString().PadRight(40) + StartDate.ToString().PadRight(20)
+            return Name.ToString().PadRight(40) + StartDate.ToString().PadRight(20)
                 + EndDate.ToString().PadRight(20) + DateReserved.ToString().PadRight(20);
         }
     }

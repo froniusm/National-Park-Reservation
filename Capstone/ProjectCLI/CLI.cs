@@ -14,6 +14,8 @@ namespace Capstone.ProjectCLI
     public class CLI
     {
         private string databaseConnection;
+        private BasicSearch userBasicSearch;
+        private AdvancedSearchOptions userAdvancedSearch;
         private const string Command_SearchCampsiteByPark = "1";
         private const string Command_SearchCampsiteByCampground = "2";
         private const string Command_Quit = "Q";
@@ -26,7 +28,7 @@ namespace Capstone.ProjectCLI
         public void RunMainMenu()
         {
             CLIHelper.DisplayHeader();
-            
+
             // Present user with options and record his or her selection
             string message = " Welcome! Please select from among the following options:\n [1] Search campsite by park" +
                 "\n [2] Search campsite by campground\n [Q] Quit\n\n >> ";
@@ -34,28 +36,123 @@ namespace Capstone.ProjectCLI
             bool isCaseSensitive = false;
             string userChoice = CLIHelper.GetString(message, answerChoices, isCaseSensitive);
 
-            // For either option, user must select park first
-
-
             // Retrieve list of campsites meeting search criteria
             Park selectedPark = new Park();
             List<Campsite> campsMeetingCriteria = new List<Campsite>();
-
+            List<Campsite> campsAvailableForReservation = new List<Campsite>();
+ 
             switch (userChoice)
             {
                 case Command_SearchCampsiteByPark:
                     selectedPark = SelectPark();
-                    campsMeetingCriteria = SearchForCampsitesInPark(selectedPark.ParkID);
+                    campsMeetingCriteria = CampsitesInParkSearchLoop(selectedPark.ParkID);
+                    campsAvailableForReservation = GetCampsitesAvailableForReservation(campsMeetingCriteria);
                     break;
 
                 case Command_SearchCampsiteByCampground:
                     selectedPark = SelectPark();
                     Campground selectedCampground = SelectCampground(selectedPark.ParkID);
-                    campsMeetingCriteria = SearchForCampsitesInCampground(selectedCampground.CampgroundID);
+                    campsMeetingCriteria = CampsitesInCampgroundSearchLoop(selectedCampground.CampgroundID);
+                    campsAvailableForReservation = GetCampsitesAvailableForReservation(campsMeetingCriteria);
                     break;
 
                 case Command_Quit:
                     return;
+            }
+        }
+
+        public List<Campsite> GetCampsitesAvailableForReservation(List<Campsite> cs)
+        {
+            ReservationSqlDAL r = new ReservationSqlDAL(databaseConnection);
+            List<Campsite> availableCampsites = new List<Campsite>();
+            Console.WriteLine("Site Number".PadRight(15) + "Max Occupancy".PadRight(20)
+                + "Accessible".PadRight(20) + "Max RV Length".PadRight(20) + "Utilities");
+            foreach (Campsite c in cs)
+            {
+                if (r.IsCampsiteAvailableForReservation(userBasicSearch, c))
+                {
+                    availableCampsites.Add(c);
+                }
+            }
+            Console.ReadLine();
+            return availableCampsites;
+        }
+
+        public void RequestReservation(List<Campsite> sitesAvailable)
+        { 
+            // Display all campsites available to be booked
+            for (int i = 1; i < sitesAvailable.Count; i++)
+            {
+                Console.WriteLine($" [{i}] {sitesAvailable[i - 1].ToString()}");
+            }
+
+            // Ask user to select campsite
+            int userChoice = CLIHelper.GetInteger("Please select one of the above campsites " +
+                "to reserve", Enumerable.Range(1, sitesAvailable.Count).ToList<int>());
+
+            // Prompt user to enter family name
+            string familyName = CLIHelper.GetString("Please enter your family name");
+
+            // Create new reservation
+            Reservation userReservation = new Reservation();
+            userReservation.SiteID = sitesAvailable[userChoice].SiteID;
+            userReservation.StartDate = userBasicSearch.StartDate;
+            userReservation.EndDate = userBasicSearch.EndDate;
+            userReservation.Name = familyName;
+
+            // Book reservation
+            ReservationSqlDAL reservationDAL = new ReservationSqlDAL(databaseConnection);
+            reservationDAL.BookReservation(userReservation);
+            Console.WriteLine("Congratulations! Reservation successfully booked!");
+            Console.WriteLine(userReservation.ToString());
+            Console.ReadLine();
+        }
+
+        public List<Campsite> CampsitesInParkSearchLoop(int parkID)
+        {
+            List<Campsite> cs = new List<Campsite>();
+            while (true)
+            {
+                cs = SearchForCampsitesInPark(parkID);
+                if (cs.Count == 0)
+                {
+                    string warningMessage = "There were no campsites that met your search criteria.\n" +
+                        "Would you like to try again? (Y/N) >> ";
+                    string userChoice = CLIHelper.GetString(warningMessage, new List<string> { "Y", "N" });
+                    bool tryAgain = userChoice == "Y" ? true : false;
+                    if (!tryAgain)
+                    {
+                        return cs;
+                    }
+                }
+                else
+                {
+                    return cs;
+                }
+            }
+        }
+
+        public List<Campsite> CampsitesInCampgroundSearchLoop(int campgroundID)
+        {
+            List<Campsite> cs = new List<Campsite>();
+            while (true)
+            {
+                cs = SearchForCampsitesInCampground(campgroundID);
+                if (cs.Count == 0)
+                {
+                    string warningMessage = "There were no campsites that met your search criteria.\n" +
+                        "Would you like to try again? (Y/N) >> ";
+                    string userChoice = CLIHelper.GetString(warningMessage, new List<string> { "Y", "N" });
+                    bool tryAgain = userChoice == "Y" ? true : false;
+                    if (!tryAgain)
+                    {
+                        return cs;
+                    }
+                }
+                else
+                {
+                    return cs;
+                }
             }
         }
 
@@ -96,7 +193,7 @@ namespace Capstone.ProjectCLI
             List<Campground> campgroundsInPark = campgroundDAL.GetAllCampgroundsFromPark(parkID);
 
             // Print header for campground information
-            Console.WriteLine("Name".PadLeft(9).PadRight(35) + "Month Open".PadRight(20) 
+            Console.WriteLine("Name".PadLeft(9).PadRight(35) + "Month Open".PadRight(20)
                 + "Month Closed".PadRight(20) + "Daily Fee".PadRight(10));
 
             // Print each campground in selected park
@@ -121,17 +218,17 @@ namespace Capstone.ProjectCLI
 
             // Conduct search and store basic search criteria
             List<ISearchObject> parkSearchCriteria = ConductCampsiteSearch(parkID);
-            BasicSearch bs = (BasicSearch) parkSearchCriteria[0];
+            userBasicSearch = (BasicSearch)parkSearchCriteria[0];
 
             // If only basic search conducted, return campsites meeting basic criteria
             if (parkSearchCriteria.Count == 1)
             {
-                return campsiteDAL.GetAllCampsitesFromPark(bs);
+                return campsiteDAL.GetAllCampsitesFromPark(userBasicSearch);
             }
 
             // If advanced search conducted, return campsites meeting basic and advanced criteria
-            AdvancedSearchOptions aso = (AdvancedSearchOptions)parkSearchCriteria[1];
-            return campsiteDAL.GetAllCampsitesFromPark(bs, aso);
+            userAdvancedSearch = (AdvancedSearchOptions)parkSearchCriteria[1];
+            return campsiteDAL.GetAllCampsitesFromPark(userBasicSearch, userAdvancedSearch);
         }
 
         public List<Campsite> SearchForCampsitesInCampground(int campgroundID)
@@ -142,29 +239,18 @@ namespace Capstone.ProjectCLI
 
             // Conduct search and store basic search criteria
             List<ISearchObject> campgroundSearchCriteria = ConductCampsiteSearch(campgroundID);
-            BasicSearch bs = (BasicSearch)campgroundSearchCriteria[0];
+            userBasicSearch = (BasicSearch)campgroundSearchCriteria[0];
 
             // If only basic search conducted, return campsites meeting basic criteria
             if (campgroundSearchCriteria.Count == 1)
             {
-                //campsitesMeetingCriteria = campsiteDAL.GetAllCampsitesFromCampground(bs);
-                //foreach (Campsite c in campsitesMeetingCriteria)
-                //{
-                //    Console.WriteLine(c.ToString());
-                //}
-
-                return campsiteDAL.GetAllCampsitesFromCampground(bs);
+                return campsiteDAL.GetAllCampsitesFromCampground(userBasicSearch);
             }
 
             // If advanced search conducted, return campsites meeting basic and advanced criteria
-            AdvancedSearchOptions aso = (AdvancedSearchOptions) campgroundSearchCriteria[1];
+            userAdvancedSearch = (AdvancedSearchOptions)campgroundSearchCriteria[1];
 
-            foreach (Campsite c in campsitesMeetingCriteria)
-            {
-                Console.WriteLine(c.ToString());
-            }
-            Console.ReadLine();
-            return campsiteDAL.GetAllCampsitesFromCampground(bs, aso);
+            return campsiteDAL.GetAllCampsitesFromCampground(userBasicSearch, userAdvancedSearch);
         }
 
         public List<ISearchObject> ConductCampsiteSearch(int locationID)
@@ -197,7 +283,7 @@ namespace Capstone.ProjectCLI
         public BasicSearch RunBasicSearch(int locationID)
         {
             CLIHelper.DisplayHeader();
-            
+
             // Messages
             string startDateMessage = " On what date would you like to begin your adventure at National" +
                 " Park System?  Please type in the format 'yyyy-mm-dd'. >> ";

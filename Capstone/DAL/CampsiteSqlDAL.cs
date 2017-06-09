@@ -56,7 +56,47 @@ namespace Capstone.DAL
 
         public List<Campsite> GetAllCampsitesFromCampground(BasicSearch bs, AdvancedSearchOptions aso)
         {
-            throw new NotImplementedException();
+            List<Campsite> campsitesMeetingCriteria = new List<Campsite>();
+
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(databaseConnection))
+                {
+                    conn.Open();
+                    int campgroundID = bs.LocationID;
+                    int monthStartVisit = bs.StartDate.Month;
+                    int monthEndVisit = bs.EndDate.Month;
+                    int maxOccupancy = aso.MaxOccupancy;
+                    bool accessible = aso.NeedsAccessibility;
+                    int maxRVLength = aso.RequiredRVLength;
+                    bool needsUtilities = aso.NeedsUtilityHookup;
+
+                    string accessiblityQuery = accessible ? " AND site.accessible = 1" : "";
+
+                    string sqlQuery = "SELECT * FROM [site] " +
+                        "INNER JOIN campground ON campground.campground_id = [site].campground_id " +
+                        $"WHERE campground.campground_id = {campgroundID} AND " +
+                        $"campground.open_from_mm <= {monthStartVisit} AND " +
+                        $"campground.open_to_mm >= {monthEndVisit} AND " +
+                        $"site.max_occupancy >= {maxOccupancy} AND " +
+                        $"site.max_rv_length <= {maxRVLength}" +
+                        $"{accessiblityQuery};";
+
+                    SqlCommand cmd = new SqlCommand(sqlQuery, conn);
+
+                    SqlDataReader reader = cmd.ExecuteReader();
+                    while (reader.Read())
+                    {
+                        campsitesMeetingCriteria.Add(PopulateCampsiteObject(reader));
+                    }
+
+                    return campsitesMeetingCriteria;
+                }
+            }
+            catch (SqlException)
+            {
+                throw;
+            }
         }
 
         public List<Campsite> GetAllCampsitesFromPark(BasicSearch bs)
