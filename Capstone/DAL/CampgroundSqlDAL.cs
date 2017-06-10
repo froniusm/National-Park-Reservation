@@ -44,7 +44,25 @@ namespace Capstone.DAL
             }
         }
 
-        public Campground PopulateCampgroundObject(SqlDataReader reader)
+        public decimal GetDailyFee(int campgroundID)
+        {
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(databaseConnection))
+                {
+                    conn.Open();
+                    string sqlQuery = $"SELECT daily_fee FROM campground WHERE campground_id = {campgroundID};";
+                    SqlCommand cmd = new SqlCommand(sqlQuery, conn);
+                    return Convert.ToDecimal(cmd.ExecuteScalar());
+                }
+            }
+            catch (SqlException)
+            {
+                throw;
+            }
+        }
+
+        private Campground PopulateCampgroundObject(SqlDataReader reader)
         {
             Campground cg = new Campground();
             cg.CampgroundID = Convert.ToInt32(reader["campground_id"]);

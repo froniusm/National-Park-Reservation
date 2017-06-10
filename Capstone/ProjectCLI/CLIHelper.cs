@@ -26,7 +26,7 @@ namespace Capstone.ProjectCLI
                 numberOfAttempts++;
             }
             while (!DateTime.TryParse(userInput, out dateValue));
-
+            DisplayHeader();
             return dateValue;
         }
 
@@ -136,7 +136,6 @@ namespace Capstone.ProjectCLI
                     Console.ReadLine();
                 }
 
-                //DisplayHeader();
                 Console.Write(message);
 
                 userInput = isCaseSensitive ? Console.ReadLine() : Console.ReadLine().ToUpper();
@@ -144,6 +143,7 @@ namespace Capstone.ProjectCLI
             }
             while (String.IsNullOrEmpty(userInput) || !availableChoices.Contains(userInput));
 
+            //DisplayHeader();
             return userInput;
         }
 
@@ -156,18 +156,44 @@ namespace Capstone.ProjectCLI
             {
                 if (numberOfAttempts > 0)
                 {
-                    Console.Write("\n Invalid input. Please try again. ");
+                    Console.WriteLine("\n Invalid input. Please try again. ");
                     Console.ReadLine();
                 }
 
-                //DisplayHeader();
-                Console.Write(message);
+                Console.Write(message + " ");
+                userInput = Console.ReadLine();
+                numberOfAttempts++;
 
                 numberOfAttempts++;
             }
             while (String.IsNullOrEmpty(userInput));
 
             return userInput;
+        }
+
+        public static string FormatParagraph(string message)
+        {
+            int maxNumCharPerLine = 80;
+            string[] words = message.Split(' ');
+
+            string line = "  ";
+            StringBuilder paragraph = new StringBuilder();
+            foreach (string word in words)
+            {
+                if (String.Concat(line, word).Length > maxNumCharPerLine)
+                {
+                    paragraph.AppendLine(line);
+                    line = "  ";
+                }
+
+                line = String.Concat(line, word, " ");
+            }
+
+            if (line != "")
+            {
+                paragraph.AppendLine(line);
+            }
+            return paragraph.ToString();
         }
 
         public static void DisplayHeader()

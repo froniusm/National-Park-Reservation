@@ -17,8 +17,8 @@ namespace Capstone.Models
 
         public override string ToString()
         {
-            return Name.ToString().PadRight(40) + StartDate.ToString().PadRight(20)
-                + EndDate.ToString().PadRight(20) + DateReserved.ToString().PadRight(20);
+            return Name.ToString().PadRight(40) + StartDate.ToShortDateString().PadRight(20)
+                + EndDate.ToShortDateString().PadRight(20) + DateReserved.ToShortDateString().PadRight(20);
         }
     }
 }

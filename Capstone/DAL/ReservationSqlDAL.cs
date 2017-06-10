@@ -18,25 +18,7 @@ namespace Capstone.DAL
             this.databaseConnection = databaseConnection;
         }
 
-        public List<Reservation> GetAllUpcomingReservations()
-        {
-            throw new NotImplementedException();
-
-            //try
-            //{
-            //    using (SqlConnection conn = new SqlConnection(databaseConnection))
-            //    {
-            //        conn.Open();
-            //        SqlCommand cmd = new SqlCommand( , conn);
-            //    }
-            //}
-            //catch (SqlException)
-            //{
-            //    throw;
-            //}
-        }
-
-        public List<Reservation> GetAllUpcomingReservations(DateTime startDate, DateTime endDate)
+        public List<Reservation> GetUpcomingReservations(DateTime startDate, DateTime endDate)
         {
             List<Reservation> reservations = new List<Reservation>();
             try
@@ -64,7 +46,36 @@ namespace Capstone.DAL
             }
         }
 
-        public void BookReservation(Reservation reservation)
+        public List<Reservation> GetUpcomingReservations(DateTime startDate, DateTime endDate, Campsite site)
+        {
+            List<Reservation> reservations = new List<Reservation>();
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(databaseConnection))
+                {
+                    conn.Open();
+                    string sqlQuery = $"SELECT * FROM reservation " +
+                        $"WHERE site_id = {site.SiteID} AND " +
+                        $"((from_date BETWEEN '{startDate}' AND '{endDate}') OR " +
+                        $"(to_date BETWEEN '{startDate}' AND '{endDate}'));";
+                    SqlCommand cmd = new SqlCommand(sqlQuery, conn);
+
+                    SqlDataReader reader = cmd.ExecuteReader();
+
+                    while (reader.Read())
+                    {
+                        reservations.Add(PopulateReservationObject(reader));
+                    }
+                    return reservations;
+                }
+            }
+            catch (SqlException)
+            {
+                throw;
+            }
+        }
+
+        public int BookReservation(Reservation reservation)
         {
             try
             {
@@ -72,13 +83,13 @@ namespace Capstone.DAL
                 {
                     conn.Open();
                     string sqlQuery = $"INSERT INTO reservation VALUES({reservation.SiteID}, " +
-                        $"@Name, '{reservation.StartDate}', '{reservation.EndDate}');";
+                        $"@Name, '{reservation.StartDate}', '{reservation.EndDate}', '{DateTime.Now}'); " +
+                        $"SELECT SCOPE_IDENTITY();";
 
                     SqlCommand cmd = new SqlCommand(sqlQuery, conn);
                     cmd.Parameters.AddWithValue("@Name", reservation.Name);
-                    cmd.ExecuteNonQuery();
 
-                    return;
+                    return Convert.ToInt32(cmd.ExecuteScalar());
                 }
             }
             catch (SqlException)

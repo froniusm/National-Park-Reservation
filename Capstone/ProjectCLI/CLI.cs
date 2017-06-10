@@ -38,73 +38,138 @@ namespace Capstone.ProjectCLI
 
             // Retrieve list of campsites meeting search criteria
             Park selectedPark = new Park();
-            List<Campsite> campsMeetingCriteria = new List<Campsite>();
-            List<Campsite> campsAvailableForReservation = new List<Campsite>();
+            List<Campsite> campsMeetingSearchCriteria = new List<Campsite>();
  
             switch (userChoice)
             {
                 case Command_SearchCampsiteByPark:
                     selectedPark = SelectPark();
-                    campsMeetingCriteria = CampsitesInParkSearchLoop(selectedPark.ParkID);
-                    campsAvailableForReservation = GetCampsitesAvailableForReservation(campsMeetingCriteria);
+                    campsMeetingSearchCriteria = CampsitesInParkSearchLoop(selectedPark.ParkID);
+                    ReservationLoop(campsMeetingSearchCriteria);
+                    Console.WriteLine("Thank you!");
                     break;
 
                 case Command_SearchCampsiteByCampground:
                     selectedPark = SelectPark();
                     Campground selectedCampground = SelectCampground(selectedPark.ParkID);
-                    campsMeetingCriteria = CampsitesInCampgroundSearchLoop(selectedCampground.CampgroundID);
-                    campsAvailableForReservation = GetCampsitesAvailableForReservation(campsMeetingCriteria);
+                    campsMeetingSearchCriteria = CampsitesInCampgroundSearchLoop(selectedCampground.CampgroundID);
+                    ReservationLoop(campsMeetingSearchCriteria);
+                    Console.WriteLine("Thank you!");
                     break;
 
                 case Command_Quit:
+                    Console.WriteLine("Thank you and come again soon!");
                     return;
             }
         }
 
-        public List<Campsite> GetCampsitesAvailableForReservation(List<Campsite> cs)
+        public void ReservationLoop(List<Campsite> campsMeetingSearchCriteria)
         {
-            ReservationSqlDAL r = new ReservationSqlDAL(databaseConnection);
-            List<Campsite> availableCampsites = new List<Campsite>();
-            Console.WriteLine("Site Number".PadRight(15) + "Max Occupancy".PadRight(20)
-                + "Accessible".PadRight(20) + "Max RV Length".PadRight(20) + "Utilities");
-            foreach (Campsite c in cs)
+            ReservationSqlDAL reservationDAL = new ReservationSqlDAL(databaseConnection);
+            while (true)
             {
-                if (r.IsCampsiteAvailableForReservation(userBasicSearch, c))
+                CLIHelper.DisplayHeader();
+                Campsite campToBook = SelectCampsite(campsMeetingSearchCriteria);
+                bool isCampAvailable = IsAvailableForReservation(campToBook);
+
+                if (!isCampAvailable)
                 {
-                    availableCampsites.Add(c);
+                    string message = $" We're sorry; those dates are not currently available for campsite #{campToBook.SiteNumber}.\n" +
+                        " [1] Select another date range\n [2] Select alternate campsite\n [3] Return to main menu >> ";
+                    int userChoice = CLIHelper.GetInteger(message, new List<int> { 1, 2, 3 });
+                    if (userChoice == 1)
+                    {
+                        CLIHelper.DisplayHeader();
+                        int numDaysAhead = CLIHelper.GetInteger(" View upcoming reservations over the next __ days. >> ");
+                        List<Reservation> upcomingReservations = reservationDAL.GetUpcomingReservations(DateTime.Now, DateTime.Now.AddDays(numDaysAhead), campToBook);
+                        Console.WriteLine("There are " + upcomingReservations.Count + " upcoming reservations in that timeframe.");
+                        foreach (Reservation r in upcomingReservations)
+                        {
+                            Console.WriteLine(" " + r.ToString());
+                        }
+                        Console.ReadLine();
+                        userBasicSearch = RunBasicSearch(campToBook.SiteID);
+                    }
+                    else if (userChoice == 3)
+                    {
+                        break;
+                    }
+                }
+                else
+                {
+                    RequestReservation(campToBook);
+                    break;
                 }
             }
-            Console.ReadLine();
-            return availableCampsites;
         }
 
-        public void RequestReservation(List<Campsite> sitesAvailable)
-        { 
-            // Display all campsites available to be booked
-            for (int i = 1; i < sitesAvailable.Count; i++)
+        public Campsite SelectCampsite(List<Campsite> campsMeetingSearchCriteria)
+        {
+            // Display header
+            Console.WriteLine(" CAMPSITES");
+
+            // Display information for each campsite meeting search criteria
+            int currentCampgroundID = 0;
+            for (int i = 1; i <= campsMeetingSearchCriteria.Count; i++)
             {
-                Console.WriteLine($" [{i}] {sitesAvailable[i - 1].ToString()}");
+                if (currentCampgroundID != campsMeetingSearchCriteria[i - 1].CampgroundID)
+                {
+                    currentCampgroundID = campsMeetingSearchCriteria[i - 1].CampgroundID;
+                    Console.WriteLine($"\n CAMPGROUND #{currentCampgroundID} | TOTAL COST OF STAY FROM " +
+                        $"{userBasicSearch.StartDate.ToShortDateString()} TO {userBasicSearch.EndDate.ToShortDateString()}: " +
+                        $"{CalculateTotalCost(currentCampgroundID).ToString("C")}");
+                    Console.WriteLine(" Site Number".PadRight(15) + "Max Occupancy".PadRight(20) +
+                        "Accessible".PadRight(20) + "Max RV Length".PadRight(20) + "Utilities");
+                }
+                Console.WriteLine($" [{i}] {campsMeetingSearchCriteria[i - 1].ToString()}");
             }
 
-            // Ask user to select campsite
-            int userChoice = CLIHelper.GetInteger("Please select one of the above campsites " +
-                "to reserve", Enumerable.Range(1, sitesAvailable.Count).ToList<int>());
+            // Prompt user to select campsite
+            List<int> availableChoices = Enumerable.Range(1, campsMeetingSearchCriteria.Count).ToList<int>();
+            int userChoice = CLIHelper.GetInteger("\n Please select campsite. >> ", availableChoices);
 
+            // Return selected campsite
+            return campsMeetingSearchCriteria[userChoice - 1];
+        }
+
+        public bool IsAvailableForReservation(Campsite site)
+        {
+            ReservationSqlDAL r = new ReservationSqlDAL(databaseConnection);
+            return r.IsCampsiteAvailableForReservation(userBasicSearch, site);
+        }
+
+        public void RequestReservation(Campsite site)
+        {
+            CLIHelper.DisplayHeader();
+
+            // Display reservation information
+            bool needsAccessiblity = userAdvancedSearch == null ? false : userAdvancedSearch.NeedsAccessibility;
+            string numOccupants = userAdvancedSearch == null ? "Not specified" : userAdvancedSearch.MaxOccupancy.ToString();
+            string rvLength = userAdvancedSearch == null ? "N/A" : userAdvancedSearch.RequiredRVLength.ToString();
+            bool needsUtilityHookup = userAdvancedSearch == null ? false : userAdvancedSearch.NeedsUtilityHookup;
+
+            Console.WriteLine($" RESERVATION FOR SITE #{site.SiteNumber}\n" +
+                $" FROM {userBasicSearch.StartDate.ToShortDateString()} TO {userBasicSearch.EndDate.Date.ToShortDateString()}\n" +
+                $" ACCOMODATIONS\n\t ACCESSIBILITY: {needsAccessiblity}\n\t" +
+                $" NUMBER OF OCCUPANTS: {numOccupants}\n\t" +
+                $" NEEDS RV LENGTH OF: {rvLength}\n\t" +
+                $" RV UTILITY HOOKUP: {needsUtilityHookup}\n\n");
+            
             // Prompt user to enter family name
-            string familyName = CLIHelper.GetString("Please enter your family name");
+            string familyName = CLIHelper.GetString(" Please enter your family name for the reservation: >> ");
 
             // Create new reservation
             Reservation userReservation = new Reservation();
-            userReservation.SiteID = sitesAvailable[userChoice].SiteID;
+            userReservation.SiteID = site.SiteID;
             userReservation.StartDate = userBasicSearch.StartDate;
             userReservation.EndDate = userBasicSearch.EndDate;
             userReservation.Name = familyName;
 
             // Book reservation
             ReservationSqlDAL reservationDAL = new ReservationSqlDAL(databaseConnection);
-            reservationDAL.BookReservation(userReservation);
-            Console.WriteLine("Congratulations! Reservation successfully booked!");
-            Console.WriteLine(userReservation.ToString());
+            int confirmationNum = reservationDAL.BookReservation(userReservation);
+            Console.WriteLine("\n Congratulations! Reservation successfully booked!");
+            Console.WriteLine($" Confirmation Id#: {confirmationNum}\n {userReservation.ToString()}");
             Console.ReadLine();
         }
 
@@ -165,13 +230,21 @@ namespace Capstone.ProjectCLI
 
             // Print table header for information about all parks
             Console.WriteLine("Name".PadLeft(9).PadRight(25) + "Location".PadRight(20)
-                + "Date Established".PadRight(25) + "Acres".PadRight(10)
-                + "Annual Number of Visitors".PadRight(10) + "Description");
+                + "Date Established".PadRight(25) + "Acres".PadRight(20)
+                + "# Visitors Yearly");
 
-            // Print information for each park
+            // Print tabular information for each park
             for (int i = 1; i <= AllParks.Count; i++)
             {
                 Console.WriteLine($" [{i}] {AllParks[i - 1].ToString()}\n");
+            }
+
+            // Print park descriptions
+            Console.WriteLine(" PARK DESCRIPTIONS\n");
+            for (int i = 1; i <= AllParks.Count; i++)
+            {
+                Console.WriteLine(" " + AllParks[i - 1].Name.ToUpper());
+                Console.WriteLine(CLIHelper.FormatParagraph(AllParks[i - 1].Description) + "\n");
             }
 
             // Store user park selection
@@ -263,7 +336,7 @@ namespace Capstone.ProjectCLI
 
             // Ask user if they want to perform a basic or advanced search and then record their choice
             string searchMessage = " Would you like to perform a basic or advanced search?\n" +
-                " [1] Basic\n [2] Advanced\n >> ";
+                " [1] Basic\n [2] Advanced\n\n >> ";
             string userSearchChoice = CLIHelper.GetString(searchMessage, new List<string> { "1", "2" });
 
             // Create basic search object and add to list
@@ -286,9 +359,9 @@ namespace Capstone.ProjectCLI
 
             // Messages
             string startDateMessage = " On what date would you like to begin your adventure at National" +
-                " Park System?  Please type in the format 'yyyy-mm-dd'. >> ";
-            string endDateMessage = " On what date would you like to end your adventure? " +
-                " Please type in the format 'yyyy-mm-dd'. >> ";
+                " Park System?\n Please type in the format 'yyyy-mm-dd'.\n\n >> ";
+            string endDateMessage = " On what date would you like to end your adventure?\n" +
+                " Please type in the format 'yyyy-mm-dd'.\n\n >> ";
 
             // Prompt user for basic search criteria
             DateTime userStartDate = CLIHelper.GetDateTime(startDateMessage);
@@ -335,6 +408,15 @@ namespace Capstone.ProjectCLI
             aso.RequiredRVLength = rvLength;
 
             return aso;
+        }
+
+        public decimal CalculateTotalCost(int campgroundID)
+        {
+            CampgroundSqlDAL campgroundDAL = new CampgroundSqlDAL(databaseConnection);
+            decimal dailyFee = campgroundDAL.GetDailyFee(campgroundID);
+            int numDaysInStay = userBasicSearch.EndDate.Subtract(userBasicSearch.StartDate).Days;
+
+            return dailyFee * numDaysInStay;
         }
     }
 }
