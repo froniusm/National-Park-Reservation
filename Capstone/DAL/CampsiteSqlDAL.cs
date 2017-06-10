@@ -33,7 +33,7 @@ namespace Capstone.DAL
 
                     string sqlQuery = "SELECT * FROM [site] " +
                         "INNER JOIN campground ON campground.campground_id = [site].campground_id " +
-                        $"WHERE campground.park_id = {campgroundID} AND " +
+                        $"WHERE campground.campground_id = {campgroundID} AND " +
                         $"campground.open_from_mm <= {monthStartVisit} AND " +
                         $"campground.open_to_mm >= {monthEndVisit};";
 
@@ -72,6 +72,7 @@ namespace Capstone.DAL
                     bool needsUtilities = aso.NeedsUtilityHookup;
 
                     string accessiblityQuery = accessible ? " AND site.accessible = 1" : "";
+                    string needsUtiliitesQuery = needsUtilities ? " AND site.utilities = 1" : "";
 
                     string sqlQuery = "SELECT * FROM [site] " +
                         "INNER JOIN campground ON campground.campground_id = [site].campground_id " +
@@ -79,8 +80,9 @@ namespace Capstone.DAL
                         $"campground.open_from_mm <= {monthStartVisit} AND " +
                         $"campground.open_to_mm >= {monthEndVisit} AND " +
                         $"site.max_occupancy >= {maxOccupancy} AND " +
-                        $"site.max_rv_length <= {maxRVLength}" +
-                        $"{accessiblityQuery};";
+                        $"site.max_rv_length >= {maxRVLength}" +
+                        $"{accessiblityQuery}" +
+                        $"{needsUtiliitesQuery};";
 
                     SqlCommand cmd = new SqlCommand(sqlQuery, conn);
 
@@ -153,6 +155,7 @@ namespace Capstone.DAL
                     bool needsUtilities = aso.NeedsUtilityHookup;
 
                     string accessiblityQuery = accessible ? " AND site.accessible = 1" : "";
+                    string needsUtiliitesQuery = needsUtilities ? " AND site.utilities = 1" : "";
 
                     string sqlQuery = "SELECT * FROM [site] " +
                         "INNER JOIN campground ON campground.campground_id = [site].campground_id " +
@@ -160,8 +163,9 @@ namespace Capstone.DAL
                         $"campground.open_from_mm <= {monthStartVisit} AND " +
                         $"campground.open_to_mm >= {monthEndVisit} AND " +
                         $"site.max_occupancy >= {maxOccupancy} AND " +
-                        $"site.max_rv_length <= {maxRVLength}" +
-                        $"{accessiblityQuery};";
+                        $"site.max_rv_length >= {maxRVLength}" +
+                        $"{accessiblityQuery}" +
+                        $"{needsUtiliitesQuery};";
 
                     SqlCommand cmd = new SqlCommand(sqlQuery, conn);
 

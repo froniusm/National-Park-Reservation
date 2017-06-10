@@ -208,12 +208,4 @@ ALTER TABLE campground ADD FOREIGN KEY (park_id) REFERENCES park(park_id);
 ALTER TABLE site ADD FOREIGN KEY (campground_id) REFERENCES campground(campground_id);
 ALTER TABLE reservation ADD FOREIGN KEY (site_id) REFERENCES site(site_id);
 
-SELECT COUNT(*) FROM reservation 
-WHERE reservation.site_id = 1 AND from_date <= '2017-09-26' OR to_date >= '2017-09-23';
 
-SELECT * FROM reservation
-
-SELECT COUNT(*) FROM reservation
-WHERE reservation.site_id = 1 AND
-(((from_date BETWEEN '2017-06-01' AND '2017-06-08') OR (to_date BETWEEN '2017-06-01' AND '2017-06-08'))
-OR (('2017-06-01' BETWEEN from_date AND to_date) OR ('2017-06-08' BETWEEN from_date AND to_date)));
