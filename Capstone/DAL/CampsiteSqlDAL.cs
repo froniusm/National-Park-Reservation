@@ -184,6 +184,49 @@ namespace Capstone.DAL
             }
         }
 
+        public string GetCampgroundName(Campsite site)
+        {
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(databaseConnection))
+                {
+                    conn.Open();
+                    string sqlQuery = $"SELECT campground.name FROM site " +
+                                      $"INNER JOIN campground ON campground.campground_id = site.campground_id " +
+                                      $"WHERE site.campground_id = {site.CampgroundID};";
+                    SqlCommand cmd = new SqlCommand(sqlQuery, conn);
+
+                    return Convert.ToString(cmd.ExecuteScalar());
+                }
+            }
+            catch (SqlException)
+            {
+                throw;
+            }
+        }
+
+        public string GetParkName(Campsite site)
+        {
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(databaseConnection))
+                {
+                    conn.Open();
+                    string sqlQuery = $"SELECT park.name FROM site " +
+                                      $"INNER JOIN campground ON campground.campground_id = site.campground_id " +
+                                      $"INNER JOIN park ON park.park_id = campground.park_id " +
+                                      $"WHERE site.campground_id = {site.CampgroundID};";
+                    SqlCommand cmd = new SqlCommand(sqlQuery, conn);
+
+                    return Convert.ToString(cmd.ExecuteScalar());
+                }
+            }
+            catch (SqlException)
+            {
+                throw;
+            }
+        }
+
         private Campsite PopulateCampsiteObject(SqlDataReader reader)
         {
             Campsite c = new Campsite();

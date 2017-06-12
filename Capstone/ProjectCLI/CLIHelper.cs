@@ -43,7 +43,6 @@ namespace Capstone.ProjectCLI
                     Console.WriteLine("Invalid input. Please try again");
                 }
 
-                //DisplayHeader();
                 Console.Write(message);
 
                 userInput = Console.ReadLine();
@@ -67,7 +66,6 @@ namespace Capstone.ProjectCLI
                     Console.WriteLine("Invalid input. Please try again");
                 }
 
-                //DisplayHeader();
                 Console.Write(message);
 
                 userInput = Console.ReadLine();
@@ -134,6 +132,7 @@ namespace Capstone.ProjectCLI
                 {
                     Console.Write("\n Invalid input. Please try again. ");
                     Console.ReadLine();
+                    DisplayHeader();
                 }
 
                 Console.Write(message);
@@ -143,7 +142,6 @@ namespace Capstone.ProjectCLI
             }
             while (String.IsNullOrEmpty(userInput) || !availableChoices.Contains(userInput));
 
-            //DisplayHeader();
             return userInput;
         }
 
@@ -176,14 +174,14 @@ namespace Capstone.ProjectCLI
             int maxNumCharPerLine = 80;
             string[] words = message.Split(' ');
 
-            string line = "  ";
+            string line = "".PadLeft(5, ' ');
             StringBuilder paragraph = new StringBuilder();
             foreach (string word in words)
             {
                 if (String.Concat(line, word).Length > maxNumCharPerLine)
                 {
                     paragraph.AppendLine(line);
-                    line = "  ";
+                    line = "".PadLeft(5, ' ');
                 }
 
                 line = String.Concat(line, word, " ");
@@ -199,6 +197,11 @@ namespace Capstone.ProjectCLI
         public static void DisplayHeader()
         {
             Console.Clear();
+            Console.WriteLine("    //\\\\   _ _______ _ ");
+            Console.WriteLine("   ////\\\\ /___________\\    ___________");
+            Console.WriteLine("  /////\\\\\\|---_____---|   |========\\___\\");
+            Console.WriteLine(" //////\\\\\\\\- |     |--|   |_______||__=_|");
+            Console.WriteLine("    |__|  |--|     |--|   (o) (o) (o) (o)");
             Console.WriteLine("".PadRight(50, '*'));
             Console.WriteLine("* NATIONAL PARK CAMPSITE RESERVATION SYSTEM *");
             Console.WriteLine("".PadRight(50, '*') + "\n");

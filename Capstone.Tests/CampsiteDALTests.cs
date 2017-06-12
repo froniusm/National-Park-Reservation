@@ -84,7 +84,7 @@ namespace Capstone.Tests
         [TestMethod()]
         public void GetAllCampsitesFromCampgroundTest()
         {
-            // Act, arrange, and assert!
+            // Arrange, act, and assert!
             CampsiteSqlDAL classToTest = new CampsiteSqlDAL(databaseConnection);
             BasicSearch search = new BasicSearch();
             search.LocationID = fakeCampground.CampgroundID;
@@ -98,7 +98,7 @@ namespace Capstone.Tests
         [TestMethod()]
         public void GetAllCampsitesFromCampgroundWithAdvancedOptionsTest()
         {
-            // Act, arrange, and assert!
+            // Arrange, act, and assert!
             CampsiteSqlDAL classToTest = new CampsiteSqlDAL(databaseConnection);
             BasicSearch search = new BasicSearch();
             search.LocationID = fakeCampground.CampgroundID;
@@ -118,7 +118,7 @@ namespace Capstone.Tests
         [TestMethod()]
         public void GetAllCampsitesFromParkTest()
         {
-            // Act, arrange, and assert!
+            // Arrange, act, and assert!
             CampsiteSqlDAL classToTest = new CampsiteSqlDAL(databaseConnection);
             BasicSearch search = new BasicSearch();
             search.LocationID = fakePark.ParkID;
@@ -132,7 +132,7 @@ namespace Capstone.Tests
         [TestMethod()]
         public void GetAllCampsitesFromParkWithAdvancedOptionsTest()
         {
-            // Act, arrange, and assert!
+            // Arrange, act, and assert!
             CampsiteSqlDAL classToTest = new CampsiteSqlDAL(databaseConnection);
             BasicSearch search = new BasicSearch();
             search.LocationID = fakePark.ParkID;
@@ -147,6 +147,20 @@ namespace Capstone.Tests
 
             List<Campsite> campsites = classToTest.GetAllCampsitesFromPark(search, advancedSearch);
             Assert.AreEqual(1, campsites.Count);
+        }
+
+        [TestMethod]
+        public void GetCampgroundNameTest()
+        {
+            CampsiteSqlDAL classToTest = new CampsiteSqlDAL(databaseConnection);
+            Assert.AreEqual(fakeCampground.Name, classToTest.GetCampgroundName(fakeCampsite));
+        }
+
+        [TestMethod]
+        public void GetParkNameTest()
+        {
+            CampsiteSqlDAL classToTest = new CampsiteSqlDAL(databaseConnection);
+            Assert.AreEqual(fakePark.Name, classToTest.GetParkName(fakeCampsite));
         }
     }
 }

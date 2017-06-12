@@ -9,7 +9,7 @@ namespace Capstone.Models
     public class Campsite
     {
         public int SiteID { get; set; }
-        public int CampgroundID { get; set; }  // Remove if unnecessary
+        public int CampgroundID { get; set; }
         public int SiteNumber { get; set; }
         public int MaxOccupancy { get; set; }
         public bool IsAccessible { get; set; }

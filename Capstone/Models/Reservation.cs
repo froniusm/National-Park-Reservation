@@ -9,7 +9,7 @@ namespace Capstone.Models
     public class Reservation
     {
         public int ReservationID { get; set; }
-        public int SiteID { get; set; }  // Remove if unnecessary
+        public int SiteID { get; set; }
         public string Name { get; set; }
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
@@ -17,8 +17,8 @@ namespace Capstone.Models
 
         public override string ToString()
         {
-            return Name.ToString().PadRight(40) + StartDate.ToShortDateString().PadRight(20)
-                + EndDate.ToShortDateString().PadRight(20) + DateReserved.ToShortDateString().PadRight(20);
+            return Name.ToString().PadRight(40) + StartDate.ToShortDateString().PadRight(15)
+                + EndDate.ToShortDateString().PadRight(15) + DateReserved.ToShortDateString();
         }
     }
 }

@@ -83,7 +83,7 @@ namespace Capstone.DAL
                 {
                     conn.Open();
                     string sqlQuery = $"INSERT INTO reservation VALUES({reservation.SiteID}, " +
-                        $"@Name, '{reservation.StartDate}', '{reservation.EndDate}', '{DateTime.Now}'); " +
+                        $"@Name, '{reservation.StartDate}', '{reservation.EndDate}', '{reservation.DateReserved}'); " +
                         $"SELECT SCOPE_IDENTITY();";
 
                     SqlCommand cmd = new SqlCommand(sqlQuery, conn);
